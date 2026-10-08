@@ -582,6 +582,11 @@ class DiarizationPurity(UEMSupportMixin, BaseMetric):
     ) -> Details:
         detail = self.init_components()
 
+        # crop reference and hypothesis to evaluated regions (uem)
+        if uem is not None:
+            reference = reference.crop(uem, mode="intersection")
+            hypothesis = hypothesis.crop(uem, mode="intersection")
+
         duration = 0
         largest = 0
 

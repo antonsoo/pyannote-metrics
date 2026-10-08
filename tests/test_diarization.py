@@ -188,3 +188,31 @@ def test_jaccard_error_rate_empty_reference():
     hypothesis[Segment(0, 10)] = "spk"
     # empty reference -> zero speaker count -> must not ZeroDivisionError
     assert JaccardErrorRate()(Annotation(), hypothesis) == 1.0
+
+
+def test_purity_uem():
+    reference = Annotation()
+    reference[Segment(0, 5)] = "A"
+    reference[Segment(5, 10)] = "B"
+    hypothesis = Annotation()
+    hypothesis[Segment(0, 10)] = "x"
+
+    # "x" is only 50% pure over the whole file but 100% pure over the first 5s
+    assert DiarizationPurity()(reference, hypothesis) == 0.5
+    uem = Timeline([Segment(0, 5)])
+    assert DiarizationPurity()(reference, hypothesis, uem=uem) == 1.0
+
+
+def test_coverage_uem():
+    reference = Annotation()
+    reference[Segment(0, 5)] = "A"
+    reference[Segment(5, 10)] = "B"
+    hypothesis = Annotation()
+    hypothesis[Segment(0, 3)] = "x"
+    hypothesis[Segment(3, 5)] = "y"
+    hypothesis[Segment(5, 10)] = "z"
+
+    # "A" is 3/5 covered by "x"; "B" is fully covered by "z"
+    npt.assert_almost_equal(DiarizationCoverage()(reference, hypothesis), 0.8)
+    uem = Timeline([Segment(0, 5)])
+    npt.assert_almost_equal(DiarizationCoverage()(reference, hypothesis, uem=uem), 0.6)
