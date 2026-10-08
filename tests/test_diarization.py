@@ -7,6 +7,7 @@ from pyannote.core import Timeline
 from pyannote.metrics.diarization import DiarizationErrorRate
 from pyannote.metrics.diarization import DiarizationPurity
 from pyannote.metrics.diarization import DiarizationCoverage
+from pyannote.metrics.diarization import DiarizationCompleteness
 from pyannote.metrics.diarization import DiarizationSpeakerCountAccuracy
 from pyannote.metrics.diarization import DiarizationSpeakerCountError
 
@@ -188,3 +189,28 @@ def test_jaccard_error_rate_empty_reference():
     hypothesis[Segment(0, 10)] = "spk"
     # empty reference -> zero speaker count -> must not ZeroDivisionError
     assert JaccardErrorRate()(Annotation(), hypothesis) == 1.0
+
+
+def test_completeness_collar_is_centered_on_reference():
+    # a 4s collar around the reference boundaries (0 and 10) leaves [2, 8] of the
+    # reference speaker, which is split between two hypothesis clusters
+    reference = Annotation()
+    reference[Segment(0, 10)] = "A"
+    hypothesis = Annotation()
+    hypothesis[Segment(0, 6)] = "x"
+    hypothesis[Segment(6, 8)] = "y"
+    value = DiarizationCompleteness(collar=4.0)(reference, hypothesis)
+    assert value == pytest.approx(0.0)
+
+
+def test_completeness_skip_overlap_is_applied_to_reference():
+    # the overlap of the reference ([4, 8]) is skipped; the rest of speaker A is
+    # split between two clusters
+    reference = Annotation()
+    reference[Segment(0, 8), "A"] = "A"
+    reference[Segment(4, 8), "B"] = "B"
+    hypothesis = Annotation()
+    hypothesis[Segment(0, 2)] = "x"
+    hypothesis[Segment(2, 8)] = "y"
+    value = DiarizationCompleteness(skip_overlap=True)(reference, hypothesis)
+    assert value == pytest.approx(0.0)

@@ -667,9 +667,9 @@ class DiarizationHomogeneity(UEMSupportMixin, BaseMetric):
         uem: Optional[Timeline] = None,
         **kwargs,
     ) -> Details:
-        detail = self.init_components()
-
         # crop reference and hypothesis to evaluated regions (uem)
+        # remove collars around reference segment boundaries
+        # remove overlap regions (if requested)
         reference, hypothesis = self.uemify(
             reference,
             hypothesis,
@@ -677,6 +677,11 @@ class DiarizationHomogeneity(UEMSupportMixin, BaseMetric):
             collar=self.collar,
             skip_overlap=self.skip_overlap,
         )
+
+        return self._entropies(reference, hypothesis)
+
+    def _entropies(self, reference: Annotation, hypothesis: Annotation) -> Details:
+        detail = self.init_components()
 
         # cooccurrence matrix
         matrix = reference * hypothesis
@@ -737,6 +742,14 @@ class DiarizationCompleteness(DiarizationHomogeneity):
         uem: Optional[Timeline] = None,
         **kwargs,
     ) -> Details:
-        return super(DiarizationCompleteness, self).compute_components(
-            hypothesis, reference, uem=uem, **kwargs
+        # collars and overlap regions must be extruded around the reference,
+        # so 'uemify' is called here with the arguments in their usual order
+        reference, hypothesis = self.uemify(
+            reference,
+            hypothesis,
+            uem=uem,
+            collar=self.collar,
+            skip_overlap=self.skip_overlap,
         )
+
+        return self._entropies(hypothesis, reference)

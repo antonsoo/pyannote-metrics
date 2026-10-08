@@ -7,6 +7,7 @@ Next
 
 - feat: add diarization speaker count metrics
 - fix: fix metrics for empty references (@Atishyy27)
+- fix: fix `DiarizationCompleteness` collar and overlap handling (applied around the hypothesis instead of the reference) (@antonsoo)
 
 Version 4.1.0 (2026-05-06)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
